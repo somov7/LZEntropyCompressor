@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cstring>
-#include "Huffman.hpp"
+#include "Compressor.hpp"
 
 int main() {
 	char str[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, "
@@ -11,9 +11,9 @@ int main() {
 		"Excepteur sint occaecat cupidatat non proident, sunt in culpa qui "
 		"officia deserunt mollit anim id est laborum.",
 		*str2 = nullptr, *str3 = nullptr;
-	size_t l1 = strlen(str), l2, l3;
-	huffmanEncode(str, l1, &str2, l2);
-	huffmanDecode(str2, l2, &str3, l3);
+	size_t l1 = sizeof str, l2, l3;
+	compress_block(str, l1, str2, l2);
+	decompress_block(str2, l2, str3, l3);
 	std::cout << str3;
 	return 0;
 }

@@ -139,13 +139,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="HashMap.hpp" />
+    <ClInclude Include="Compressor.hpp" />
     <ClInclude Include="Huffman.hpp" />
     <ClInclude Include="HuffmanTree.hpp" />
+    <ClInclude Include="LZ77.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Compressor.cpp" />
     <ClCompile Include="Huffman.cpp" />
     <ClCompile Include="HuffmanTree.cpp" />
+    <ClCompile Include="LZ77.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

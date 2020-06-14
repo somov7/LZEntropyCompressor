@@ -4,7 +4,6 @@ class HashMap {
 	size_t dataSize, tableSize, substrSize;
 	unsigned *a;
 	char* data;
-
 	unsigned curHash;
 	size_t curPos;
 public:
