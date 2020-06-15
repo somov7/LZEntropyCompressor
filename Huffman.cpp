@@ -1,6 +1,7 @@
 #include <queue>
 #include <vector>
 #include <string>
+#include <algorithm>
 #include "HuffmanTree.hpp"
 #include "Huffman.hpp"
 
@@ -15,44 +16,59 @@ inline void nextBit(size_t &byteNum, uint8_t &bitNum) {
 }
 
 void huffmanEncode(char* inBuffer, size_t inSize, char *&outBuffer, size_t &outSize) {
+	
 	int *charCount = new int[CHAR_COUNT](); // number of entries for each char in input buffer
 	for (size_t i = 0; i < inSize; ++i) {
 		++charCount[uchar(inBuffer[i])];
 	}
-	auto cmp = [](const HuffmanTree* lhs, const HuffmanTree* rhs) -> bool { return lhs->getSize() > rhs->getSize(); };
-	std::priority_queue <HuffmanTree *, std::vector<HuffmanTree *>, decltype(cmp)> q(cmp);
+	std::vector <HuffmanTree*> nodes;
 	for (size_t i = 0; i < CHAR_COUNT; i++) {
 		if (charCount[i] > 0) {
-			q.push(new HuffmanTree (char(i), charCount[i]));
+			nodes.push_back(new HuffmanTree (char(i), charCount[i]));
 		}
 	}
-	if (q.size() == 1) {
+	if (nodes.size() == 1) {
 		outSize = 6;
 		outBuffer = new char[6];
 		outBuffer[0] = 1 << 4; // input data contains only one unique character
-		outBuffer[1] = *(q.top()->getValue());
+		outBuffer[1] = *(nodes.front()->getValue());
 		outBuffer[2] = (inSize >> 24) & 0xFF;
 		outBuffer[3] = (inSize >> 16) & 0xFF;
 		outBuffer[4] = (inSize >> 8) & 0xFF;
 		outBuffer[5] = inSize & 0xFF;
-		delete q.top();
+		delete nodes.front();
 		delete[] charCount;
  		return;
 	}
-	HuffmanTree *first, *second;
-	size_t bitCount = 8 + q.size() * 10 - 1; // number of bits in output buffer, 1-st 3 bits of 1-st byte contain number of bits used to store code length, 4-th bit contains info on data consisting of more then one unique character 
-	while (q.size() > 1) {
-		first = q.top();
-		q.pop();
-		second = q.top();
-		q.pop();
-		q.push(new HuffmanTree(first, second));
+	
+	std::sort(nodes.begin(), nodes.end(), [](HuffmanTree* lhs, HuffmanTree* rhs) -> bool {return lhs->getSize() < rhs->getSize(); });
+	std::queue <HuffmanTree*, std::deque<HuffmanTree*>> q(std::deque<HuffmanTree*>(nodes.begin(), nodes.end())), p;
+	HuffmanTree* first, * second;
+	while (q.size() + p.size() > 1) {
+		if(p.empty() || (!q.empty() && q.front() < p.front())){
+			first = q.front();
+			q.pop();
+		}
+		else {
+			first = p.front();
+			p.pop();
+		}
+		if (p.empty() || (!q.empty() && q.front() < p.front())) {
+			second = q.front();
+			q.pop();
+		}
+		else {
+			second = p.front();
+			p.pop();
+		}
+		p.push(new HuffmanTree(first, second));
 	}
-	HuffmanTree* root = q.top();
+	HuffmanTree* root = p.front();
 	
 	uint32_t *codes = new uint32_t[CHAR_COUNT]();
 	uint8_t *lengths = new uint8_t[CHAR_COUNT]();
 	root->getCodes(codes, lengths);
+	size_t bitCount = 8 + nodes.size() * 10 - 1; // number of bits in output buffer, 1-st 3 bits of 1-st byte contain number of bits used to store code length, 4-th bit contains info on data consisting of more then one unique character 
 	for (size_t i = 0; i < CHAR_COUNT; ++i) {
 		bitCount += lengths[i] * charCount[i];
 	}
@@ -106,7 +122,8 @@ void huffmanDecode(char* inBuffer, size_t inSize, char *&outBuffer, size_t& outS
 
 	std::string strOutBuffer;
 	curNode = root;
-	while (byteNum < inSize - 1 || bitNum < bitOffset) {
+	size_t maxByte = inSize - (bitOffset != 0);
+	while (byteNum < maxByte || bitNum < bitOffset) {
 		if (((inBuffer[byteNum] >> bitNum) & 1) == 0) {
 			curNode = curNode->getLeftChild();
 		}
