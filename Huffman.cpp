@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <iostream>
 #include "HuffmanTree.hpp"
 #include "Huffman.hpp"
 
@@ -15,14 +16,14 @@ inline void nextBit(size_t &byteNum, uint8_t &bitNum) {
 	}
 }
 
-void huffmanEncode(char* inBuffer, size_t inSize, char *&outBuffer, size_t &outSize) {
+void huffmanEncode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t &outSize) {
 	
-	int *charCount = new int[CHAR_COUNT](); // number of entries for each char in input buffer
+	uint32_t *charCount = new uint32_t[CHAR_COUNT](); // number of entries for each char in input buffer
 	for (size_t i = 0; i < inSize; ++i) {
-		++charCount[uchar(inBuffer[i])];
+		++charCount[uint8_t(inBuffer[i])];
 	}
 	std::vector <HuffmanTree*> nodes;
-	for (size_t i = 0; i < CHAR_COUNT; i++) {
+	for (size_t i = 0; i < CHAR_COUNT; ++i) {
 		if (charCount[i] > 0) {
 			nodes.push_back(new HuffmanTree (char(i), charCount[i]));
 		}
@@ -41,11 +42,11 @@ void huffmanEncode(char* inBuffer, size_t inSize, char *&outBuffer, size_t &outS
  		return;
 	}
 	
-	std::sort(nodes.begin(), nodes.end(), [](HuffmanTree* lhs, HuffmanTree* rhs) -> bool {return lhs->getSize() < rhs->getSize(); });
+	std::sort(nodes.begin(), nodes.end(), [](const HuffmanTree* lhs, const HuffmanTree* rhs) -> bool {return lhs->getSize() < rhs->getSize(); });
 	std::queue <HuffmanTree*, std::deque<HuffmanTree*>> q(std::deque<HuffmanTree*>(nodes.begin(), nodes.end())), p;
 	HuffmanTree* first, * second;
 	while (q.size() + p.size() > 1) {
-		if(p.empty() || (!q.empty() && q.front() < p.front())){
+		if(p.empty() || (!q.empty() && q.front()->getSize() < p.front()->getSize())){
 			first = q.front();
 			q.pop();
 		}
@@ -53,7 +54,7 @@ void huffmanEncode(char* inBuffer, size_t inSize, char *&outBuffer, size_t &outS
 			first = p.front();
 			p.pop();
 		}
-		if (p.empty() || (!q.empty() && q.front() < p.front())) {
+		if (p.empty() || (!q.empty() && q.front()->getSize() < p.front()->getSize())) {
 			second = q.front();
 			q.pop();
 		}
@@ -84,12 +85,12 @@ void huffmanEncode(char* inBuffer, size_t inSize, char *&outBuffer, size_t &outS
 	root->writeTree(outBuffer, byteNum, bitNum);
 
 	for (size_t i = 0; i < inSize; ++i) {
-		uint8_t curCharLen = lengths[inBuffer[i]];
-		size_t curCode = codes[inBuffer[i]];
+		uint8_t curCharLen = lengths[uint8_t(inBuffer[i])];
+		uint32_t curCode = codes[uint8_t(inBuffer[i])];
 		while (curCharLen >= 8 - bitNum) {
 			outBuffer[byteNum] |= (curCode << bitNum);
 			curCode >>= 8 - bitNum;
-			curCharLen -= 8 - bitNum;
+			curCharLen -= 8 - bitNum;	
 			bitNum = 0;
 			++byteNum;
 		}
@@ -102,10 +103,10 @@ void huffmanEncode(char* inBuffer, size_t inSize, char *&outBuffer, size_t &outS
 	delete root;
 }
 
-void huffmanDecode(char* inBuffer, size_t inSize, char *&outBuffer, size_t& outSize) {
-	if (((inBuffer[0] >> 4) & 1) == 1){
+void huffmanDecode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t& outSize) {
+	if (((inBuffer[0] >> 0x04) & 1) == 1){
 		char chr = inBuffer[1];
-		size_t outSize = (inBuffer[2] << 0x18) | (inBuffer[2] << 0x10) | (inBuffer[2] << 0x08) | inBuffer[2];
+		size_t outSize = (uint8_t(inBuffer[2]) << 0x18) | (uint8_t(inBuffer[3]) << 0x10) | (uint8_t(inBuffer[4]) << 0x08) | uint8_t(inBuffer[5]);
 		delete[] outBuffer;
 		outBuffer = new char[outSize];
 		for (size_t i = 0; i < outSize; ++i) {
@@ -113,7 +114,7 @@ void huffmanDecode(char* inBuffer, size_t inSize, char *&outBuffer, size_t& outS
 		}
 		return;
 	}
-	uint8_t bitOffset = inBuffer[0] & 7; // last byte bit offset
+	uint8_t bitOffset = inBuffer[0] & 0x07; // last byte bit offset
 	size_t byteNum = 1; // current inBuffer byte number
 	uint8_t bitNum = 0; // current inBuffer bit number
 	HuffmanTree* root = new HuffmanTree(), *curNode; 
@@ -124,7 +125,7 @@ void huffmanDecode(char* inBuffer, size_t inSize, char *&outBuffer, size_t& outS
 	curNode = root;
 	size_t maxByte = inSize - (bitOffset != 0);
 	while (byteNum < maxByte || bitNum < bitOffset) {
-		if (((inBuffer[byteNum] >> bitNum) & 1) == 0) {
+		if (((uint8_t(inBuffer[byteNum]) >> bitNum) & 1) == 0) {
 			curNode = curNode->getLeftChild();
 		}
 		else {
@@ -136,12 +137,12 @@ void huffmanDecode(char* inBuffer, size_t inSize, char *&outBuffer, size_t& outS
 		}
 		nextBit(byteNum, bitNum);
 	}
-	
+
+	delete root;
 	delete[] outBuffer;
 	outSize = strOutBuffer.size();
 	outBuffer = new char[strOutBuffer.size()];
 	for (size_t i = 0; i < strOutBuffer.size(); ++i) {
 		outBuffer[i] = strOutBuffer[i];
 	}
-	delete root;
 }

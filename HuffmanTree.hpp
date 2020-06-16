@@ -19,6 +19,6 @@ public:
 	void getCodes(uint32_t* codes, uint8_t* lengths, uint32_t curCode = 0, uint8_t curLen = 0) const;
 
 	void writeTree(char* output, size_t& byteNum, uint8_t& bitNum) const;
-	void readTree(char* input, size_t& byteNum, uint8_t& bitNum);
+	void readTree(const char* input, size_t& byteNum, uint8_t& bitNum);
 
 };

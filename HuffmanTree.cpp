@@ -47,8 +47,8 @@ HuffmanTree* HuffmanTree::getRightChild() const {
 
 void HuffmanTree::getCodes(uint32_t * codes, uint8_t * lengths, uint32_t curCode, uint8_t curLen) const{
 	if (this->value != nullptr) {
-		codes[uchar(*(this->value))] = curCode;
-		lengths[uchar(*(this->value))] = curLen;
+		codes[uint8_t(*(this->value))] = curCode;
+		lengths[uint8_t(*(this->value))] = curLen;
 	}
 	else{
 		leftChild->getCodes(codes, lengths, curCode, curLen + 1);
@@ -65,13 +65,13 @@ void HuffmanTree::writeTree(char* output, size_t& byteNum, uint8_t& bitNum) cons
 	}
 	else {
 		nextBit(byteNum, bitNum);
-		output[byteNum++] |= (*value) << bitNum;
-		output[byteNum] |= (*value) >> (8 - bitNum);
+		output[byteNum++] |= uint8_t(*value) << bitNum;
+		output[byteNum] |= uint8_t(*value) >> (8 - bitNum);
 	}
 }
 
-void HuffmanTree::readTree(char* input, size_t& byteNum, uint8_t& bitNum) {
-	if (((input[byteNum] >> bitNum) & 1) == 0) {
+void HuffmanTree::readTree(const char* input, size_t& byteNum, uint8_t& bitNum) {
+	if (((uint8_t(input[byteNum]) >> bitNum) & 1) == 0) {
 		char chr;
 		if (bitNum == 7) {
 			bitNum = 0;
@@ -80,7 +80,7 @@ void HuffmanTree::readTree(char* input, size_t& byteNum, uint8_t& bitNum) {
 		}
 		else {
 			++bitNum;
-			chr = char((uchar(input[byteNum]) >> bitNum) | (uchar(input[byteNum + 1]) << (8 - bitNum)));
+			chr = char((uint8_t(input[byteNum]) >> bitNum) | (uint8_t(input[byteNum + 1]) << (8 - bitNum)));
 			++byteNum;
 		}
 		this->value = new char(chr);

@@ -2,7 +2,7 @@
 #include "LZ77.hpp"
 #include "Huffman.hpp"
 
-void compress_block(char* inBuffer, size_t inSize, char *&outBuffer, size_t& outSize, bool level) {
+void compress_block(const char* inBuffer, size_t inSize, char *&outBuffer, size_t& outSize, bool level) {
 
 	char* lz77Data = nullptr;
 	size_t lz77Size;
@@ -20,7 +20,7 @@ void compress_block(char* inBuffer, size_t inSize, char *&outBuffer, size_t& out
 	
 }
 
-void decompress_block(char* inBuffer, size_t inSize, char *&outBuffer, size_t& outSize) {
+void decompress_block(const char* inBuffer, size_t inSize, char *&outBuffer, size_t& outSize) {
 
 	char* huffmanData = nullptr;
 	size_t huffmanSize;
