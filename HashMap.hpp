@@ -1,19 +1,15 @@
 #pragma once
+#include <vector>
+#include <utility>
+
+#define BUCKETS_NUMBER (1 << 13)
 
 class HashMap {
-	size_t dataSize, tableSize, substrSize;
-	unsigned *a;
-	char* data;
-	unsigned curHash;
-	size_t curPos;
+	std::vector<std::pair<uint32_t, size_t>>* buckets;
 public:
-	HashMap(): dataSize(0), tableSize(0), a(nullptr), data(nullptr) {}
-	HashMap(char *data, size_t dataSize, size_t substrSize): data(data), dataSize(dataSize), substrSize(substrSize) {
-		
-		a = new unsigned[tableSize];
-	}
-	unsigned initial_hash(size_t pos = 0) {
-		curHash = 0;
-		curPos = pos;
-	}
+	HashMap();
+	void insert(uint32_t key, std::pair<uint32_t, size_t> value);
+	int32_t find(uint32_t key, uint32_t valueFirst) const;
+	int32_t find_and_insert(uint32_t key, std::pair<uint32_t, size_t> value);
+	~HashMap();
 };

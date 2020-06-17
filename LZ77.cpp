@@ -1,19 +1,31 @@
 #include <unordered_map>
 #include <string>
 #include "LZ77.hpp"
+#include "Hasher.hpp"
+#include "HashMap.hpp"
 
 void lz77EncodeFast(const char* inBuffer, size_t inSize, char*& outBuffer, size_t &outSize) {
 	
 	std::string strOutBuffer(1, char(0x00));
 	size_t infoByte = 0;
-	std::unordered_map<std::string, size_t> map;
+	bool afterTuple = true;
+	Hasher hasher(inBuffer);
+	HashMap map;
+
 	for (size_t i = 0; i + MIN_LENGTH < inSize; ++i) {
 		std::string substr(inBuffer + i, inBuffer + i + 4);
-		auto f = map.find(substr);
-		if (f != map.end() && i - f->second < MAX_JUMP) {
-			size_t jump = i - f->second;
+		uint32_t hash;
+		if (afterTuple){
+			hash = hasher.init_substr(i);
+		}
+		else {
+			hash = hasher.next_substr();
+		}
+		uint32_t f = map.find_and_insert(hasher.get_hash(), { hasher.get_substr(), i });
+		if (f != -1 && f < MAX_JUMP) {
+			size_t jump = i - f;
 			size_t length = 4;
-			while (inBuffer[i + length] == inBuffer[f->second + length] && length < MAX_LENGTH && i + length < inSize) {
+			while (inBuffer[i + length] == inBuffer[f + length] && length < MAX_LENGTH && i + length < inSize) {
 				++length;
 			}
 			char tupleHigher = jump >> 0x04;
@@ -36,8 +48,8 @@ void lz77EncodeFast(const char* inBuffer, size_t inSize, char*& outBuffer, size_
 				strOutBuffer += tupleLower;
 				strOutBuffer[infoByte] |= 0x03 << (strOutBuffer.size() - infoByte - 3);
 			}
-			f->second = i;
 			i += length - 1;
+			afterTuple = true;
 		}
 		else {
 			if ((strOutBuffer.size() - infoByte) == 9) {
@@ -45,8 +57,8 @@ void lz77EncodeFast(const char* inBuffer, size_t inSize, char*& outBuffer, size_
 				strOutBuffer += char(0x00);
 			}
 			strOutBuffer += inBuffer[i];
+			afterTuple = false;
 		}
-		map.insert({ substr, i });
 	}
 	for (size_t i = inSize - MIN_LENGTH; i < inSize; ++i) {
 		if ((strOutBuffer.size() - infoByte) == 9) {

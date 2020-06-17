@@ -140,12 +140,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Compressor.hpp" />
+    <ClInclude Include="HashMap.hpp" />
+    <ClInclude Include="Hasher.hpp" />
     <ClInclude Include="Huffman.hpp" />
     <ClInclude Include="HuffmanTree.hpp" />
     <ClInclude Include="LZ77.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Compressor.cpp" />
+    <ClCompile Include="Hasher.cpp" />
+    <ClCompile Include="HashMap.cpp" />
     <ClCompile Include="Huffman.cpp" />
     <ClCompile Include="HuffmanTree.cpp" />
     <ClCompile Include="LZ77.cpp" />

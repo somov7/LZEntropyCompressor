@@ -14,12 +14,12 @@ int main() {
 		str[0][i] = test_str[i];
 	}
 	l[0] = sizeof test_str;
-	lz77EncodeFast(str[0], l[0], str[1], l[1]);
-	huffmanEncode(str[1], l[1], str[2], l[2]);
-	huffmanDecode(str[2], l[2], str[3], l[3]);
-	lz77Decode(str[3], l[3], str[4], l[4]);
-	//compress_block(str, l1, str2, l2);
-	//decompress_block(str2, l2, str3, l3);
+	//lz77EncodeFast(str[0], l[0], str[1], l[1]);
+	//huffmanEncode(str[1], l[1], str[2], l[2]);
+	//huffmanDecode(str[2], l[2], str[3], l[3]);
+	//lz77Decode(str[3], l[3], str[4], l[4]);
+	compress_block(str[0], l[0], str[1], l[1]);
+	decompress_block(str[1], l[1], str[2], l[2]);
 	//std::cout << str3;
 	return 0;
 }

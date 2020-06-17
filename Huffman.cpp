@@ -73,6 +73,7 @@ void huffmanEncode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t
 	for (size_t i = 0; i < CHAR_COUNT; ++i) {
 		bitCount += lengths[i] * charCount[i];
 	}
+	delete[] charCount;
 
 	outSize = (bitCount + 7) >> 3;
 	delete[] outBuffer;
@@ -83,6 +84,7 @@ void huffmanEncode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t
 	uint8_t bitNum = 0;
 
 	root->writeTree(outBuffer, byteNum, bitNum);
+	delete root;
 
 	for (size_t i = 0; i < inSize; ++i) {
 		uint8_t curCharLen = lengths[uint8_t(inBuffer[i])];
@@ -97,10 +99,8 @@ void huffmanEncode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t
 		outBuffer[byteNum] |= curCode << bitNum;
 		bitNum += curCharLen;
 	}
-	delete[] charCount;
 	delete[] codes;
 	delete[] lengths;
-	delete root;
 }
 
 void huffmanDecode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t& outSize) {
@@ -137,8 +137,8 @@ void huffmanDecode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t
 		}
 		nextBit(byteNum, bitNum);
 	}
-
 	delete root;
+
 	delete[] outBuffer;
 	outSize = strOutBuffer.size();
 	outBuffer = new char[strOutBuffer.size()];

@@ -8,10 +8,10 @@ void compress_block(const char* inBuffer, size_t inSize, char *&outBuffer, size_
 	size_t lz77Size;
 	
 	if (level) {
-		lz77EncodeFast(inBuffer, inSize, lz77Data, lz77Size);
+		lz77EncodeDeep(inBuffer, inSize, lz77Data, lz77Size);
 	}
 	else {
-		lz77EncodeDeep(inBuffer, inSize, lz77Data, lz77Size);
+		lz77EncodeFast(inBuffer, inSize, lz77Data, lz77Size);
 	}
 	
 	huffmanEncode(lz77Data, lz77Size, outBuffer, outSize);
