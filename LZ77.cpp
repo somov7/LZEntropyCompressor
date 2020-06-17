@@ -1,4 +1,3 @@
-#include <string>
 #include "LZ77.hpp"
 #include "Hasher.hpp"
 #include "HashMap.hpp"
@@ -6,14 +5,13 @@
 
 void lz77EncodeFast(const char* inBuffer, size_t inSize, char*& outBuffer, size_t &outSize) {
 	
-	std::string strOutBuffer(1, char(0x00));
+	std::vector<char> strOutBuffer(1, char(0x00));
 	size_t infoByte = 0;
 	bool afterTuple = true;
 	Hasher hasher(inBuffer);
 	HashMap map;
 
 	for (size_t i = 0; i + MIN_LENGTH < inSize; ++i) {
-		std::string substr(inBuffer + i, inBuffer + i + 4);
 		uint32_t hash;
 		if (afterTuple){
 			hash = hasher.init_substr(i);
@@ -32,20 +30,20 @@ void lz77EncodeFast(const char* inBuffer, size_t inSize, char*& outBuffer, size_
 			char tupleLower = (jump << 0x04) | (length - MIN_LENGTH);
 			if ((strOutBuffer.size() - infoByte) == 9) {
 				infoByte = strOutBuffer.size();
-				strOutBuffer += char(0x03);
-				strOutBuffer += tupleHigher;
-				strOutBuffer += tupleLower;
+				strOutBuffer.push_back(char(0x03));
+				strOutBuffer.push_back(tupleHigher);
+				strOutBuffer.push_back(tupleLower);
 			}
 			else if((strOutBuffer.size() - infoByte) == 8){
-				strOutBuffer += tupleHigher;
+				strOutBuffer.push_back(tupleHigher);
 				strOutBuffer[infoByte] |= 0x80;
 				infoByte = strOutBuffer.size();
-				strOutBuffer += char(0x01);
-				strOutBuffer += tupleLower;
+				strOutBuffer.push_back(char(0x01));
+				strOutBuffer.push_back(tupleLower);
 			}
 			else {
-				strOutBuffer += tupleHigher;
-				strOutBuffer += tupleLower;
+				strOutBuffer.push_back(tupleHigher);
+				strOutBuffer.push_back(tupleLower);
 				strOutBuffer[infoByte] |= 0x03 << (strOutBuffer.size() - infoByte - 3);
 			}
 			i += length - 1;
@@ -54,18 +52,18 @@ void lz77EncodeFast(const char* inBuffer, size_t inSize, char*& outBuffer, size_
 		else {
 			if ((strOutBuffer.size() - infoByte) == 9) {
 				infoByte = strOutBuffer.size();
-				strOutBuffer += char(0x00);
+				strOutBuffer.push_back(char(0x00));
 			}
-			strOutBuffer += inBuffer[i];
+			strOutBuffer.push_back(inBuffer[i]);
 			afterTuple = false;
 		}
 	}
 	for (size_t i = inSize - MIN_LENGTH; i < inSize; ++i) {
 		if ((strOutBuffer.size() - infoByte) == 9) {
 			infoByte = strOutBuffer.size();
-			strOutBuffer += char(0x00);
+			strOutBuffer.push_back(char(0x00));
 		}
-		strOutBuffer += inBuffer[i];
+		strOutBuffer.push_back(inBuffer[i]);
 	}
 	delete[] outBuffer;
 	outSize = strOutBuffer.size();
@@ -76,16 +74,14 @@ void lz77EncodeFast(const char* inBuffer, size_t inSize, char*& outBuffer, size_
 
 void lz77EncodeDeep(const char* inBuffer, size_t inSize, char*& outBuffer, size_t& outSize) {
 
-	std::string strOutBuffer(1, char(0x00));
+	std::vector<char> strOutBuffer(1, char(0x00));
 	size_t infoByte = 0;
 	bool afterTuple = true;
 	size_t maxLength, bestJump;
 	Hasher hasher(inBuffer);
 	MultiHashMap map;
-	
 
 	for (size_t i = 0; i + MIN_LENGTH < inSize; ++i) {
-		std::string substr(inBuffer + i, inBuffer + i + 4);
 		uint32_t hash;
 		if (afterTuple) {
 			hash = hasher.init_substr(i);
@@ -113,20 +109,20 @@ void lz77EncodeDeep(const char* inBuffer, size_t inSize, char*& outBuffer, size_
 			char tupleLower = (bestJump << 0x04) | (maxLength - MIN_LENGTH);
 			if ((strOutBuffer.size() - infoByte) == 9) {
 				infoByte = strOutBuffer.size();
-				strOutBuffer += char(0x03);
-				strOutBuffer += tupleHigher;
-				strOutBuffer += tupleLower;
+				strOutBuffer.push_back(char(0x03));
+				strOutBuffer.push_back(tupleHigher);
+				strOutBuffer.push_back(tupleLower);
 			}
 			else if ((strOutBuffer.size() - infoByte) == 8) {
-				strOutBuffer += tupleHigher;
+				strOutBuffer.push_back(tupleHigher);
 				strOutBuffer[infoByte] |= 0x80;
 				infoByte = strOutBuffer.size();
-				strOutBuffer += char(0x01);
-				strOutBuffer += tupleLower;
+				strOutBuffer.push_back(char(0x01));
+				strOutBuffer.push_back(tupleLower);
 			}
 			else {
-				strOutBuffer += tupleHigher;
-				strOutBuffer += tupleLower;
+				strOutBuffer.push_back(tupleHigher);
+				strOutBuffer.push_back(tupleLower);
 				strOutBuffer[infoByte] |= 0x03 << (strOutBuffer.size() - infoByte - 3);
 			}
 			i += maxLength - 1;
@@ -135,9 +131,9 @@ void lz77EncodeDeep(const char* inBuffer, size_t inSize, char*& outBuffer, size_
 		else {
 			if ((strOutBuffer.size() - infoByte) == 9) {
 				infoByte = strOutBuffer.size();
-				strOutBuffer += char(0x00);
+				strOutBuffer.push_back(char(0x00));
 			}
-			strOutBuffer += inBuffer[i];
+			strOutBuffer.push_back(inBuffer[i]);
 			afterTuple = false;
 		}
 		map.insert(hasher.get_hash(), {hasher.get_substr(), i});
@@ -145,9 +141,9 @@ void lz77EncodeDeep(const char* inBuffer, size_t inSize, char*& outBuffer, size_
 	for (size_t i = inSize - MIN_LENGTH; i < inSize; ++i) {
 		if ((strOutBuffer.size() - infoByte) == 9) {
 			infoByte = strOutBuffer.size();
-			strOutBuffer += char(0x00);
+			strOutBuffer.push_back(char(0x00));
 		}
-		strOutBuffer += inBuffer[i];
+		strOutBuffer.push_back(inBuffer[i]);
 	}
 	delete[] outBuffer;
 	outSize = strOutBuffer.size();
@@ -160,7 +156,7 @@ void lz77EncodeDeep(const char* inBuffer, size_t inSize, char*& outBuffer, size_
 void lz77Decode(const char* inBuffer, size_t inSize, char*& outBuffer, size_t& outSize) {
 
 	size_t infoByte = 0;
-	std::string strOutBuffer;
+	std::vector<char> strOutBuffer;
 	char tupleHigher;
 	bool isTuple = false;
 
@@ -170,14 +166,14 @@ void lz77Decode(const char* inBuffer, size_t inSize, char*& outBuffer, size_t& o
 		}
 		else {
 			if (((inBuffer[infoByte] >> (i - infoByte - 1)) & 1) == 0) {
-				strOutBuffer += inBuffer[i];
+				strOutBuffer.push_back(inBuffer[i]);
 			}
 			else {
 				if (isTuple) {
 					uint16_t jump = (uint8_t(tupleHigher) << 4) | ((uint8_t(inBuffer[i]) >> 4) & 0x0F);
 					uint8_t length = (inBuffer[i] & 0x0F) + MIN_LENGTH;
 					for (uint8_t j = 0; j < length; ++j) {
-						strOutBuffer += strOutBuffer[strOutBuffer.size() - jump];
+						strOutBuffer.push_back(strOutBuffer[strOutBuffer.size() - jump]);
 					}
 					isTuple = false;
 				}
