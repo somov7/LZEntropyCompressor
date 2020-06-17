@@ -1,4 +1,3 @@
-#include <unordered_map>
 #include <string>
 #include "LZ77.hpp"
 #include "Hasher.hpp"
@@ -102,7 +101,7 @@ void lz77Decode(const char* inBuffer, size_t inSize, char*& outBuffer, size_t& o
 			}
 			else {
 				if (isTuple) {
-					uint16_t jump = (uint16_t(tupleHigher) << 4) | ((uint16_t(inBuffer[i]) >> 4) & 0x0F);
+					uint16_t jump = (uint8_t(tupleHigher) << 4) | ((uint8_t(inBuffer[i]) >> 4) & 0x0F);
 					uint8_t length = (inBuffer[i] & 0x0F) + MIN_LENGTH;
 					for (uint8_t j = 0; j < length; ++j) {
 						strOutBuffer += strOutBuffer[strOutBuffer.size() - jump];
