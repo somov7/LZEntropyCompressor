@@ -145,6 +145,7 @@
     <ClInclude Include="Huffman.hpp" />
     <ClInclude Include="HuffmanTree.hpp" />
     <ClInclude Include="LZ77.hpp" />
+    <ClInclude Include="MultiHashMap.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Compressor.cpp" />
@@ -154,6 +155,7 @@
     <ClCompile Include="HuffmanTree.cpp" />
     <ClCompile Include="LZ77.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="MultiHashMap.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

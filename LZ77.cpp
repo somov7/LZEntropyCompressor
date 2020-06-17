@@ -2,6 +2,7 @@
 #include "LZ77.hpp"
 #include "Hasher.hpp"
 #include "HashMap.hpp"
+#include "MultiHashMap.hpp"
 
 void lz77EncodeFast(const char* inBuffer, size_t inSize, char*& outBuffer, size_t &outSize) {
 	
@@ -75,12 +76,84 @@ void lz77EncodeFast(const char* inBuffer, size_t inSize, char*& outBuffer, size_
 
 void lz77EncodeDeep(const char* inBuffer, size_t inSize, char*& outBuffer, size_t& outSize) {
 
-	outSize = inSize;
-	delete[] outBuffer;
-	outBuffer = new char[outSize]();
-	for (size_t i = 0; i < inSize; ++i) {
-		outBuffer[i] = inBuffer[i];
+	std::string strOutBuffer(1, char(0x00));
+	size_t infoByte = 0;
+	bool afterTuple = true;
+	size_t maxLength, bestJump;
+	Hasher hasher(inBuffer);
+	MultiHashMap map;
+	
+
+	for (size_t i = 0; i + MIN_LENGTH < inSize; ++i) {
+		std::string substr(inBuffer + i, inBuffer + i + 4);
+		uint32_t hash;
+		if (afterTuple) {
+			hash = hasher.init_substr(i);
+		}
+		else {
+			hash = hasher.next_substr();
+		}
+		maxLength = 0;
+		for (int32_t f = map.find_next(hasher.get_hash(), hasher.get_substr()); f != -1; f = map.find_next(hasher.get_hash(), hasher.get_substr())) {
+			size_t jump = i - f;
+			if (jump >= 4096) {
+				continue;
+			}
+			size_t length = 4;
+			while (inBuffer[i + length] == inBuffer[f + length] && length < MAX_LENGTH && i + length < inSize) {
+				++length;
+			}
+			if (length > maxLength) {
+				maxLength = length;
+				bestJump = jump;
+			}
+		}
+		if(maxLength > 0){
+			char tupleHigher = bestJump >> 0x04;
+			char tupleLower = (bestJump << 0x04) | (maxLength - MIN_LENGTH);
+			if ((strOutBuffer.size() - infoByte) == 9) {
+				infoByte = strOutBuffer.size();
+				strOutBuffer += char(0x03);
+				strOutBuffer += tupleHigher;
+				strOutBuffer += tupleLower;
+			}
+			else if ((strOutBuffer.size() - infoByte) == 8) {
+				strOutBuffer += tupleHigher;
+				strOutBuffer[infoByte] |= 0x80;
+				infoByte = strOutBuffer.size();
+				strOutBuffer += char(0x01);
+				strOutBuffer += tupleLower;
+			}
+			else {
+				strOutBuffer += tupleHigher;
+				strOutBuffer += tupleLower;
+				strOutBuffer[infoByte] |= 0x03 << (strOutBuffer.size() - infoByte - 3);
+			}
+			i += maxLength - 1;
+			afterTuple = true;
+		}
+		else {
+			if ((strOutBuffer.size() - infoByte) == 9) {
+				infoByte = strOutBuffer.size();
+				strOutBuffer += char(0x00);
+			}
+			strOutBuffer += inBuffer[i];
+			afterTuple = false;
+		}
+		map.insert(hasher.get_hash(), {hasher.get_substr(), i});
 	}
+	for (size_t i = inSize - MIN_LENGTH; i < inSize; ++i) {
+		if ((strOutBuffer.size() - infoByte) == 9) {
+			infoByte = strOutBuffer.size();
+			strOutBuffer += char(0x00);
+		}
+		strOutBuffer += inBuffer[i];
+	}
+	delete[] outBuffer;
+	outSize = strOutBuffer.size();
+	outBuffer = new char[outSize]();
+	for (size_t i = 0; i < outSize; ++i)
+		outBuffer[i] = strOutBuffer[i];
 
 }
 
