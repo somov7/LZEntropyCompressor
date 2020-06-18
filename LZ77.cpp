@@ -1,3 +1,5 @@
+#include <cstring>
+#include <vector>
 #include "LZ77.hpp"
 #include "Hasher.hpp"
 #include "HashMap.hpp"
@@ -67,9 +69,8 @@ void lz77EncodeFast(const char* inBuffer, size_t inSize, char*& outBuffer, size_
 	}
 	delete[] outBuffer;
 	outSize = strOutBuffer.size();
-	outBuffer = new char[outSize]();
-	for (size_t i = 0; i < outSize; ++i)
-		outBuffer[i] = strOutBuffer[i];
+	outBuffer = new char[outSize];
+	memcpy(outBuffer, strOutBuffer.data(), outSize * sizeof(char));
 }
 
 void lz77EncodeDeep(const char* inBuffer, size_t inSize, char*& outBuffer, size_t& outSize) {
@@ -148,8 +149,7 @@ void lz77EncodeDeep(const char* inBuffer, size_t inSize, char*& outBuffer, size_
 	delete[] outBuffer;
 	outSize = strOutBuffer.size();
 	outBuffer = new char[outSize]();
-	for (size_t i = 0; i < outSize; ++i)
-		outBuffer[i] = strOutBuffer[i];
+	memcpy(outBuffer, strOutBuffer.data(), outSize * sizeof(char));
 
 }
 
@@ -187,7 +187,5 @@ void lz77Decode(const char* inBuffer, size_t inSize, char*& outBuffer, size_t& o
 	delete[] outBuffer;
 	outSize = strOutBuffer.size();
 	outBuffer = new char[outSize];
-	for (size_t i = 0; i < outSize; ++i) {
-		outBuffer[i] = strOutBuffer[i];
-	}
+	memcpy(outBuffer, strOutBuffer.data(), outSize * sizeof(char));
 }

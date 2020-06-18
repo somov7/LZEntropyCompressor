@@ -1,8 +1,8 @@
 #include <queue>
 #include <vector>
-#include <string>
 #include <algorithm>
 #include <iostream>
+#include <cstring>
 #include "HuffmanTree.hpp"
 #include "Huffman.hpp"
 
@@ -141,8 +141,6 @@ void huffmanDecode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t
 
 	delete[] outBuffer;
 	outSize = strOutBuffer.size();
-	outBuffer = new char[strOutBuffer.size()];
-	for (size_t i = 0; i < strOutBuffer.size(); ++i) {
-		outBuffer[i] = strOutBuffer[i];
-	}
+	outBuffer = new char[outSize];
+	memcpy(outBuffer, strOutBuffer.data(), outSize * sizeof(char));
 }
