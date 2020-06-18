@@ -64,9 +64,11 @@ void HuffmanTree::writeTree(char* output, size_t& byteNum, uint8_t& bitNum) cons
 		rightChild->writeTree(output, byteNum, bitNum);
 	}
 	else {
+		output[byteNum] &= ~(1 << bitNum);
 		nextBit(byteNum, bitNum);
-		output[byteNum++] |= uint8_t(*value) << bitNum;
-		output[byteNum] |= uint8_t(*value) >> (8 - bitNum);
+		output[byteNum] = (output[byteNum] & ((1 << bitNum) - 1)) | (uint8_t(*value) << bitNum);
+		++byteNum;
+		output[byteNum] = uint8_t(*value) >> (8 - bitNum);
 	}
 }
 

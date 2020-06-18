@@ -2,32 +2,53 @@
 #include "LZ77.hpp"
 #include "Huffman.hpp"
 
-void compress_block(const char* inBuffer, size_t inSize, char *&outBuffer, size_t& outSize, bool level) {
+size_t compress_block(char* inBuffer, size_t inSize, char *outBuffer, size_t outSize, size_t level, char *workmem = nullptr) {
 
-	char* lz77Data = nullptr;
-	size_t lz77Size;
-	
-	if (level) {
-		lz77EncodeDeep(inBuffer, inSize, lz77Data, lz77Size);
+	bool workmemalloc;
+	if (workmem == nullptr) {
+		workmem = new char[WORKMEM_SIZE];
+		workmemalloc = true;
 	}
 	else {
-		lz77EncodeFast(inBuffer, inSize, lz77Data, lz77Size);
+		workmemalloc = false;
 	}
-	
-	huffmanEncode(lz77Data, lz77Size, outBuffer, outSize);
 
-	delete[] lz77Data;
-	
+	if (level) {
+		inSize = lz77EncodeDeep(inBuffer, inSize, workmem, outSize);
+	}
+	else {
+		inSize = lz77EncodeFast(inBuffer, inSize, workmem, outSize);
+	}
+
+	outSize = huffmanEncode(workmem, inSize, outBuffer, outSize);
+
+	if (workmemalloc) {
+		delete[] workmem;
+	}
+
+	return outSize;
+
 }
 
-void decompress_block(const char* inBuffer, size_t inSize, char *&outBuffer, size_t& outSize) {
-
-	char* huffmanData = nullptr;
-	size_t huffmanSize;
+size_t decompress_block(char* inBuffer, size_t inSize, char *outBuffer, size_t outSize, char* workmem = nullptr) {
 	
-	huffmanDecode(inBuffer, inSize, huffmanData, huffmanSize);
-
-	lz77Decode(huffmanData, huffmanSize, outBuffer, outSize);
+	bool workmemalloc;
+	if (workmem == nullptr) {
+		workmem = new char[WORKMEM_SIZE];
+		workmemalloc = true;
+	}
+	else {
+		workmemalloc = false;
+	}
 	
-	delete[] huffmanData;
+	inSize = huffmanDecode(inBuffer, inSize, workmem, outSize);
+
+	outSize = lz77Decode(workmem, inSize, outBuffer, outSize);
+	
+	if (workmemalloc) {
+		delete[] workmem;
+	}
+
+	return outSize;
+
 }

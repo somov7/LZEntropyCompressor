@@ -1,7 +1,6 @@
 #include <queue>
 #include <vector>
 #include <algorithm>
-#include <iostream>
 #include <cstring>
 #include "HuffmanTree.hpp"
 #include "Huffman.hpp"
@@ -16,8 +15,11 @@ inline void nextBit(size_t &byteNum, uint8_t &bitNum) {
 	}
 }
 
-void huffmanEncode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t &outSize) {
+size_t huffmanEncode(char* inBuffer, size_t inSize, char *outBuffer, size_t outSize) {
 	
+	if (inSize == 0)
+		return 0;
+
 	uint32_t *charCount = new uint32_t[CHAR_COUNT](); // number of entries for each char in input buffer
 	for (size_t i = 0; i < inSize; ++i) {
 		++charCount[uint8_t(inBuffer[i])];
@@ -29,17 +31,18 @@ void huffmanEncode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t
 		}
 	}
 	if (nodes.size() == 1) {
-		outSize = 6;
-		outBuffer = new char[6];
-		outBuffer[0] = 1 << 4; // input data contains only one unique character
+		if (outSize < 6){
+			delete nodes.front();
+			delete[] charCount;
+			return 0;
+		}
+		outBuffer[0] = 0x08; // input data contains only one unique character
 		outBuffer[1] = *(nodes.front()->getValue());
 		outBuffer[2] = (inSize >> 24) & 0xFF;
 		outBuffer[3] = (inSize >> 16) & 0xFF;
 		outBuffer[4] = (inSize >> 8) & 0xFF;
 		outBuffer[5] = inSize & 0xFF;
-		delete nodes.front();
-		delete[] charCount;
- 		return;
+		return outSize;
 	}
 	
 	std::sort(nodes.begin(), nodes.end(), [](const HuffmanTree* lhs, const HuffmanTree* rhs) -> bool {return lhs->getSize() < rhs->getSize(); });
@@ -75,10 +78,15 @@ void huffmanEncode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t
 	}
 	delete[] charCount;
 
+	if (((bitCount + 7) >> 3) > outSize) {
+		delete[] codes;
+		delete[] lengths;		
+		delete root;
+		return 0;
+	}
+
 	outSize = (bitCount + 7) >> 3;
-	delete[] outBuffer;
-	outBuffer = new char[outSize]();
-	outBuffer[0] |= bitCount & 0x07; // last byte bit offset
+	outBuffer[0] = bitCount & 0x07; // last byte bit offset
 	
 	size_t byteNum = 1;
 	uint8_t bitNum = 0;
@@ -90,29 +98,34 @@ void huffmanEncode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t
 		uint8_t curCharLen = lengths[uint8_t(inBuffer[i])];
 		uint32_t curCode = codes[uint8_t(inBuffer[i])];
 		while (curCharLen >= 8 - bitNum) {
-			outBuffer[byteNum] |= (curCode << bitNum);
+			outBuffer[byteNum] |= curCode << bitNum;
 			curCode >>= 8 - bitNum;
 			curCharLen -= 8 - bitNum;	
 			bitNum = 0;
-			++byteNum;
+			outBuffer[++byteNum] = 0;
 		}
 		outBuffer[byteNum] |= curCode << bitNum;
 		bitNum += curCharLen;
 	}
 	delete[] codes;
 	delete[] lengths;
+
+	return outSize;
 }
 
-void huffmanDecode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t& outSize) {
+size_t huffmanDecode(char* inBuffer, size_t inSize, char *outBuffer, size_t outSize) {
+
+	if (inSize == 0)
+		return 0;
+
 	if (((inBuffer[0] >> 0x04) & 1) == 1){
 		char chr = inBuffer[1];
-		size_t outSize = (uint8_t(inBuffer[2]) << 0x18) | (uint8_t(inBuffer[3]) << 0x10) | (uint8_t(inBuffer[4]) << 0x08) | uint8_t(inBuffer[5]);
-		delete[] outBuffer;
-		outBuffer = new char[outSize];
-		for (size_t i = 0; i < outSize; ++i) {
-			outBuffer[i] = chr;
+		size_t dataSize = (uint8_t(inBuffer[2]) << 0x18) | (uint8_t(inBuffer[3]) << 0x10) | (uint8_t(inBuffer[4]) << 0x08) | uint8_t(inBuffer[5]);
+		if (dataSize > outSize) {
+			return 0;
 		}
-		return;
+		memset(outBuffer, chr, sizeof(char) * dataSize);
+		return dataSize;
 	}
 	uint8_t bitOffset = inBuffer[0] & 0x07; // last byte bit offset
 	size_t byteNum = 1; // current inBuffer byte number
@@ -121,7 +134,7 @@ void huffmanDecode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t
 
 	root->readTree(inBuffer, byteNum, bitNum);
 
-	std::string strOutBuffer;
+	std::vector<char> strOutBuffer;
 	curNode = root;
 	size_t maxByte = inSize - (bitOffset != 0);
 	while (byteNum < maxByte || bitNum < bitOffset) {
@@ -132,15 +145,15 @@ void huffmanDecode(const char* inBuffer, size_t inSize, char *&outBuffer, size_t
 			curNode = curNode->getRightChild();
 		}
 		if (curNode->getValue() != nullptr) {
-			strOutBuffer += *(curNode->getValue());
+			strOutBuffer.push_back(*(curNode->getValue()));
 			curNode = root;
 		}
 		nextBit(byteNum, bitNum);
 	}
 	delete root;
 
-	delete[] outBuffer;
-	outSize = strOutBuffer.size();
-	outBuffer = new char[outSize];
-	memcpy(outBuffer, strOutBuffer.data(), outSize * sizeof(char));
+	if (strOutBuffer.size() > outSize)
+		return 0;
+	memcpy(outBuffer, strOutBuffer.data(), strOutBuffer.size() * sizeof(char));
+	return strOutBuffer.size();
 }

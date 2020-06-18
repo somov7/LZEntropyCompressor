@@ -5,15 +5,19 @@
 #include "HashMap.hpp"
 #include "MultiHashMap.hpp"
 
-void lz77EncodeFast(const char* inBuffer, size_t inSize, char*& outBuffer, size_t &outSize) {
+size_t lz77EncodeFast(char* inBuffer, size_t inSize, char* outBuffer, size_t outSize) {
 	
-	std::vector<char> strOutBuffer(1, char(0x00));
+	if (inSize == 0)
+		return 0;
+
+	std::vector<char> strOutBuffer(1, 0x00);
 	size_t infoByte = 0;
 	bool afterTuple = true;
 	Hasher hasher(inBuffer);
 	HashMap map;
+	size_t i;
 
-	for (size_t i = 0; i + MIN_LENGTH < inSize; ++i) {
+	for (i = 0; i + MIN_LENGTH < inSize; ++i) {
 		uint32_t hash;
 		if (afterTuple){
 			hash = hasher.init_substr(i);
@@ -60,29 +64,31 @@ void lz77EncodeFast(const char* inBuffer, size_t inSize, char*& outBuffer, size_
 			afterTuple = false;
 		}
 	}
-	for (size_t i = inSize - MIN_LENGTH; i < inSize; ++i) {
+	for (; i < inSize; ++i) {
 		if ((strOutBuffer.size() - infoByte) == 9) {
 			infoByte = strOutBuffer.size();
 			strOutBuffer.push_back(char(0x00));
 		}
 		strOutBuffer.push_back(inBuffer[i]);
 	}
-	delete[] outBuffer;
-	outSize = strOutBuffer.size();
-	outBuffer = new char[outSize];
-	memcpy(outBuffer, strOutBuffer.data(), outSize * sizeof(char));
+	
+	if (strOutBuffer.size() > outSize)
+		return 0;
+	memcpy(outBuffer, strOutBuffer.data(), strOutBuffer.size() * sizeof(char));
+	return strOutBuffer.size();
 }
 
-void lz77EncodeDeep(const char* inBuffer, size_t inSize, char*& outBuffer, size_t& outSize) {
+size_t lz77EncodeDeep(char* inBuffer, size_t inSize, char* outBuffer, size_t outSize) {
 
-	std::vector<char> strOutBuffer(1, char(0x00));
+	std::vector<char> strOutBuffer(1, 0x00);
 	size_t infoByte = 0;
 	bool afterTuple = true;
 	size_t maxLength, bestJump;
 	Hasher hasher(inBuffer);
 	MultiHashMap map;
+	size_t i;
 
-	for (size_t i = 0; i + MIN_LENGTH < inSize; ++i) {
+	for (i = 0; i + MIN_LENGTH < inSize; ++i) {
 		uint32_t hash;
 		if (afterTuple) {
 			hash = hasher.init_substr(i);
@@ -139,21 +145,21 @@ void lz77EncodeDeep(const char* inBuffer, size_t inSize, char*& outBuffer, size_
 		}
 		map.insert(hasher.get_hash(), {hasher.get_substr(), i});
 	}
-	for (size_t i = inSize - MIN_LENGTH; i < inSize; ++i) {
+	for (; i < inSize; ++i) {
 		if ((strOutBuffer.size() - infoByte) == 9) {
 			infoByte = strOutBuffer.size();
 			strOutBuffer.push_back(char(0x00));
 		}
 		strOutBuffer.push_back(inBuffer[i]);
 	}
-	delete[] outBuffer;
-	outSize = strOutBuffer.size();
-	outBuffer = new char[outSize]();
-	memcpy(outBuffer, strOutBuffer.data(), outSize * sizeof(char));
 
+	if (strOutBuffer.size() > outSize)
+		return 0;
+	memcpy(outBuffer, strOutBuffer.data(), strOutBuffer.size() * sizeof(char));
+	return strOutBuffer.size();
 }
 
-void lz77Decode(const char* inBuffer, size_t inSize, char*& outBuffer, size_t& outSize) {
+size_t lz77Decode(char* inBuffer, size_t inSize, char* outBuffer, size_t outSize) {
 
 	size_t infoByte = 0;
 	std::vector<char> strOutBuffer;
@@ -184,8 +190,9 @@ void lz77Decode(const char* inBuffer, size_t inSize, char*& outBuffer, size_t& o
 			}
 		}
 	}
-	delete[] outBuffer;
-	outSize = strOutBuffer.size();
-	outBuffer = new char[outSize];
-	memcpy(outBuffer, strOutBuffer.data(), outSize * sizeof(char));
+
+	if (strOutBuffer.size() > outSize)
+		return 0;
+	memcpy(outBuffer, strOutBuffer.data(), strOutBuffer.size() * sizeof(char));
+	return strOutBuffer.size();
 }
