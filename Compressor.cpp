@@ -14,13 +14,13 @@ size_t compress_block(char* inBuffer, size_t inSize, char *outBuffer, size_t out
 	}
 
 	if (level) {
-		inSize = lz77EncodeDeep(inBuffer, inSize, workmem, outSize);
+		inSize = lz77EncodeDeep((uint8_t *)inBuffer, inSize, (uint8_t *)workmem, outSize);
 	}
 	else {
-		inSize = lz77EncodeFast(inBuffer, inSize, workmem, outSize);
+		inSize = lz77EncodeFast((uint8_t*)inBuffer, inSize, (uint8_t*)workmem, outSize);
 	}
 
-	outSize = huffmanEncode(workmem, inSize, outBuffer, outSize);
+	outSize = huffmanEncode((uint8_t*)workmem, inSize, (uint8_t*)outBuffer, outSize);
 
 	if (workmemalloc) {
 		delete[] workmem;
@@ -41,9 +41,9 @@ size_t decompress_block(char* inBuffer, size_t inSize, char *outBuffer, size_t o
 		workmemalloc = false;
 	}
 	
-	inSize = huffmanDecode(inBuffer, inSize, workmem, outSize);
+	inSize = huffmanDecode((uint8_t*)inBuffer, inSize, (uint8_t*)workmem, outSize);
 
-	outSize = lz77Decode(workmem, inSize, outBuffer, outSize);
+	outSize = lz77Decode((uint8_t*)workmem, inSize, (uint8_t*)outBuffer, outSize);
 	
 	if (workmemalloc) {
 		delete[] workmem;

@@ -15,19 +15,19 @@ inline void nextBit(size_t &byteNum, uint8_t &bitNum) {
 	}
 }
 
-size_t huffmanEncode(char* inBuffer, size_t inSize, char *outBuffer, size_t outSize) {
+size_t huffmanEncode(uint8_t* inBuffer, size_t inSize, uint8_t*outBuffer, size_t outSize) {
 	
 	if (inSize == 0)
 		return 0;
 
 	uint32_t *charCount = new uint32_t[CHAR_COUNT](); // number of entries for each char in input buffer
 	for (size_t i = 0; i < inSize; ++i) {
-		++charCount[uint8_t(inBuffer[i])];
+		++charCount[inBuffer[i]];
 	}
 	std::vector <HuffmanTree*> nodes;
 	for (size_t i = 0; i < CHAR_COUNT; ++i) {
 		if (charCount[i] > 0) {
-			nodes.push_back(new HuffmanTree (char(i), charCount[i]));
+			nodes.push_back(new HuffmanTree (uint8_t(i), charCount[i]));
 		}
 	}
 	if (nodes.size() == 1) {
@@ -95,8 +95,8 @@ size_t huffmanEncode(char* inBuffer, size_t inSize, char *outBuffer, size_t outS
 	delete root;
 
 	for (size_t i = 0; i < inSize; ++i) {
-		uint8_t curCharLen = lengths[uint8_t(inBuffer[i])];
-		uint32_t curCode = codes[uint8_t(inBuffer[i])];
+		uint8_t curCharLen = lengths[inBuffer[i]];
+		uint32_t curCode = codes[inBuffer[i]];
 		while (curCharLen >= 8 - bitNum) {
 			outBuffer[byteNum] |= curCode << bitNum;
 			curCode >>= 8 - bitNum;
@@ -113,18 +113,18 @@ size_t huffmanEncode(char* inBuffer, size_t inSize, char *outBuffer, size_t outS
 	return outSize;
 }
 
-size_t huffmanDecode(char* inBuffer, size_t inSize, char *outBuffer, size_t outSize) {
+size_t huffmanDecode(uint8_t* inBuffer, size_t inSize, uint8_t *outBuffer, size_t outSize) {
 
 	if (inSize == 0)
 		return 0;
 
 	if (((inBuffer[0] >> 0x04) & 1) == 1){
-		char chr = inBuffer[1];
-		size_t dataSize = (uint8_t(inBuffer[2]) << 0x18) | (uint8_t(inBuffer[3]) << 0x10) | (uint8_t(inBuffer[4]) << 0x08) | uint8_t(inBuffer[5]);
+		uint8_t chr = inBuffer[1];
+		size_t dataSize = (inBuffer[2] << 0x18) | (inBuffer[3] << 0x10) | (inBuffer[4] << 0x08) | inBuffer[5];
 		if (dataSize > outSize) {
 			return 0;
 		}
-		memset(outBuffer, chr, sizeof(char) * dataSize);
+		memset(outBuffer, chr, sizeof(uint8_t) * dataSize);
 		return dataSize;
 	}
 	uint8_t bitOffset = inBuffer[0] & 0x07; // last byte bit offset
@@ -134,11 +134,11 @@ size_t huffmanDecode(char* inBuffer, size_t inSize, char *outBuffer, size_t outS
 
 	root->readTree(inBuffer, byteNum, bitNum);
 
-	std::vector<char> strOutBuffer;
+	std::vector<uint8_t> strOutBuffer;
 	curNode = root;
 	size_t maxByte = inSize - (bitOffset != 0);
 	while (byteNum < maxByte || bitNum < bitOffset) {
-		if (((uint8_t(inBuffer[byteNum]) >> bitNum) & 1) == 0) {
+		if (((inBuffer[byteNum] >> bitNum) & 1) == 0) {
 			curNode = curNode->getLeftChild();
 		}
 		else {
@@ -154,6 +154,6 @@ size_t huffmanDecode(char* inBuffer, size_t inSize, char *outBuffer, size_t outS
 
 	if (strOutBuffer.size() > outSize)
 		return 0;
-	memcpy(outBuffer, strOutBuffer.data(), strOutBuffer.size() * sizeof(char));
+	memcpy(outBuffer, strOutBuffer.data(), strOutBuffer.size() * sizeof(uint8_t));
 	return strOutBuffer.size();
 }

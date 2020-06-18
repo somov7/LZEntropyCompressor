@@ -6,7 +6,7 @@
 /* Constructors */
 
 HuffmanTree::HuffmanTree() : value(nullptr), size(0), leftChild(nullptr), rightChild(nullptr) {}
-HuffmanTree::HuffmanTree(char v, size_t sz) : value(new char(v)), size(sz), leftChild(nullptr), rightChild(nullptr) {}
+HuffmanTree::HuffmanTree(uint8_t v, size_t sz) : value(new uint8_t(v)), size(sz), leftChild(nullptr), rightChild(nullptr) {}
 HuffmanTree::HuffmanTree(HuffmanTree* lChild, HuffmanTree* rChild) {
 	if (lChild == nullptr || rChild == nullptr) {
 		throw(std::invalid_argument("Non-leaf node must have both children."));
@@ -31,7 +31,7 @@ size_t HuffmanTree::getSize() const {
 	return size;
 }
 
-char *HuffmanTree::getValue() const {
+uint8_t *HuffmanTree::getValue() const {
 	return value;
 };
 
@@ -56,7 +56,7 @@ void HuffmanTree::getCodes(uint32_t * codes, uint8_t * lengths, uint32_t curCode
 	}
 }
 
-void HuffmanTree::writeTree(char* output, size_t& byteNum, uint8_t& bitNum) const {
+void HuffmanTree::writeTree(uint8_t* output, size_t& byteNum, uint8_t& bitNum) const {
 	if (value == nullptr) {
 		output[byteNum] |= (1 << bitNum);
 		nextBit(byteNum, bitNum);
@@ -66,15 +66,15 @@ void HuffmanTree::writeTree(char* output, size_t& byteNum, uint8_t& bitNum) cons
 	else {
 		output[byteNum] &= ~(1 << bitNum);
 		nextBit(byteNum, bitNum);
-		output[byteNum] = (output[byteNum] & ((1 << bitNum) - 1)) | (uint8_t(*value) << bitNum);
+		output[byteNum] = (output[byteNum] & ((1 << bitNum) - 1)) | ((*value) << bitNum);
 		++byteNum;
-		output[byteNum] = uint8_t(*value) >> (8 - bitNum);
+		output[byteNum] = (*value) >> (8 - bitNum);
 	}
 }
 
-void HuffmanTree::readTree(const char* input, size_t& byteNum, uint8_t& bitNum) {
-	if (((uint8_t(input[byteNum]) >> bitNum) & 1) == 0) {
-		char chr;
+void HuffmanTree::readTree(const uint8_t* input, size_t& byteNum, uint8_t& bitNum) {
+	if (((input[byteNum] >> bitNum) & 1) == 0) {
+		uint8_t chr;
 		if (bitNum == 7) {
 			bitNum = 0;
 			chr = input[byteNum + 1];
@@ -82,10 +82,10 @@ void HuffmanTree::readTree(const char* input, size_t& byteNum, uint8_t& bitNum) 
 		}
 		else {
 			++bitNum;
-			chr = char((uint8_t(input[byteNum]) >> bitNum) | (uint8_t(input[byteNum + 1]) << (8 - bitNum)));
+			chr = (input[byteNum] >> bitNum) | (input[byteNum + 1] << (8 - bitNum));
 			++byteNum;
 		}
-		this->value = new char(chr);
+		this->value = new uint8_t(chr);
 	}
 	else {
 		nextBit(byteNum, bitNum);
